@@ -279,7 +279,7 @@ const Books = () => {
           <div key={book.id} className="bg-white p-4 rounded-lg shadow-md">
             {book.cover_image && (
               <img
-                src={book.cover_image}
+                src={baseURL+book.cover_image}
                 alt={book.title}
                 className="w-full h-48 object-cover rounded-md mb-4"
               />
