@@ -46,10 +46,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    // Optionally clear cookies or local storage if needed
-    navigate('/login');
+  const logout = async () => {
+    
+    try {
+      const res = await authApi.logOut(); // Fix: Use authApi instead of api
+      setUser(null);
+      navigate('/');
+    } catch (error) {
+      throw error; // Let the caller handle errors
+    }
   };
 
   return (

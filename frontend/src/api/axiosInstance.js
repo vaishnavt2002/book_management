@@ -1,3 +1,4 @@
+// Updated axios configuration
 import axios from 'axios';
 
 const axiosInstance = axios.create({
@@ -8,6 +9,7 @@ const axiosInstance = axios.create({
   },
 });
 
+// Separate instance for refresh requests to avoid infinite loops
 const refreshInstance = axios.create({
   baseURL: 'http://localhost:8000/api/',
   withCredentials: true,
@@ -16,28 +18,63 @@ const refreshInstance = axios.create({
   },
 });
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+};
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If already refreshing, queue the request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(() => {
+          return axiosInstance(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
+
       try {
         await refreshInstance.post('auth/token/refresh/');
+        processQueue(null);
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        // Prevent infinite retries by not retrying refresh failures
-        if (refreshError.response?.status === 400 || refreshError.response?.status === 401) {
-          // Clear any stale tokens or state if needed
-          originalRequest._retry = false; // Reset retry flag
-          return Promise.reject(refreshError);
-        }
+        processQueue(refreshError, null);
+        
+        // Clear any stale authentication state
+        // You might want to redirect to login or clear user context here
+        console.error('Token refresh failed:', refreshError);
+        
+        // Optionally redirect to login page
+        // window.location.href = '/login';
+        
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
+    
     return Promise.reject(error);
   }
 );
 
-export default axiosInstance
+export default axiosInstance;

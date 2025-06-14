@@ -119,6 +119,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'auth_app.authentication.JWTCookieAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -128,17 +129,25 @@ REST_FRAMEWORK = {
 
 from datetime import timedelta
 
+from datetime import timedelta
+
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Increased from 5 minutes
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Increased from 1 day
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
+    
+    # Cookie settings (these are mostly for reference, actual cookie handling is in views)
     'AUTH_COOKIE': 'access_token',
     'AUTH_COOKIE_REFRESH': 'refresh_token',
     'AUTH_COOKIE_HTTP_ONLY': True,
-    'AUTH_COOKIE_SECURE': False,
+    'AUTH_COOKIE_SECURE': False,  # Set to True in production
     'AUTH_COOKIE_SAMESITE': 'Lax',
+    
+    # Algorithm settings
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
 }
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
