@@ -7,7 +7,8 @@ const authApi = {
   login: (data) => axiosInstance.post('auth/login/', data),
   getProfile: () => axiosInstance.get('auth/profile/'),
   updateProfile: (data) => axiosInstance.put('auth/profile/', data),
-  logOut: () => axiosInstance.post('auth/logout/')
+  logOut: () => axiosInstance.post('auth/logout/'),
+  updateProfile: (data) => axiosInstance.put('auth/profile/', data),
 };
 
 export default authApi

@@ -8,7 +8,18 @@ const axiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
+axiosInstance.interceptors.request.use(
+  (config) => {
+    
+    // Let browser set Content-Type for FormData
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 // Separate instance for refresh requests to avoid infinite loops
 const refreshInstance = axios.create({
   baseURL: 'http://localhost:8000/api/',

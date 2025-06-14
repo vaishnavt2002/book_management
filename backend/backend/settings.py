@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
-    'auth_app'
+    'auth_app',
+    'book_app'
 ]
 
 MIDDLEWARE = [
@@ -186,3 +187,6 @@ CACHES = {
         'LOCATION': 'unique-snowflake',  
     }
 }
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

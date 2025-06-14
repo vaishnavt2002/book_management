@@ -6,6 +6,9 @@ import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Loading from './components/Loading';
+import Books from './components/Books';
+import ReadingLists from './components/ReadingLists';
+import Profile from './components/Profile';
 
 function App() {
   const { isLoading } = useAuth()
@@ -20,9 +23,9 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/books" element={<div>Books Page (To be implemented)</div>} />
-          <Route path="/reading-lists" element={<div>Reading Lists Page (To be implemented)</div>} />
-          <Route path="/profile" element={<div>Profile Page (To be implemented)</div>} />
+          <Route path="/books" element={<Books />} />
+          <Route path="/reading-lists" element={<ReadingLists />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
         </>
   )
