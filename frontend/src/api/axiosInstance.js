@@ -1,4 +1,3 @@
-// Updated axios configuration
 import axios from 'axios';
 
 const axiosInstance = axios.create({
@@ -11,7 +10,6 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     
-    // Let browser set Content-Type for FormData
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
@@ -20,7 +18,6 @@ axiosInstance.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-// Separate instance for refresh requests to avoid infinite loops
 const refreshInstance = axios.create({
   baseURL: 'http://localhost:8000/api/',
   withCredentials: true,
@@ -51,7 +48,6 @@ axiosInstance.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // If already refreshing, queue the request
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then(() => {
@@ -71,12 +67,10 @@ axiosInstance.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         
-        // Clear any stale authentication state
-        // You might want to redirect to login or clear user context here
+
         console.error('Token refresh failed:', refreshError);
         
-        // Optionally redirect to login page
-        // window.location.href = '/login';
+ 
         
         return Promise.reject(refreshError);
       } finally {

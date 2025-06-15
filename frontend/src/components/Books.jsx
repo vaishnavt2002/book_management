@@ -14,13 +14,15 @@ const Books = () => {
     publication_date: '',
     description: '',
     cover_image: null,
-    pdf_file: null, // Added PDF file field
+    pdf_file: null,
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState({});
+  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
+  const baseURL = import.meta.env.VITE_BASE_URL;
 
   useEffect(() => {
     if (!user && !isLoading) {
@@ -30,7 +32,6 @@ const Books = () => {
       fetchReadingLists();
     }
   }, [user, isLoading, navigate]);
-    const baseURL=import.meta.env.VITE_BASE_URL
 
   const fetchBooks = async () => {
     try {
@@ -92,6 +93,7 @@ const Books = () => {
         pdf_file: null,
       });
       setShowCreateForm(false);
+      setShowModal(true);
       fetchBooks();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to create book');
@@ -100,17 +102,16 @@ const Books = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this book?')) {
-      setIsSubmitting({ ...isSubmitting, [id]: 'delete' });
-      try {
-        await bookApi.deleteBook(id);
-        fetchBooks();
-      } catch (err) {
-        setError('Failed to delete book');
-      } finally {
-        setIsSubmitting({ ...isSubmitting, [id]: false });
-      }
+  const handleViewPDF = async (bookId) => {
+    setIsSubmitting({ ...isSubmitting, [bookId]: 'pdf' });
+    try {
+      const response = await bookApi.getBookPDF(bookId);
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      window.open(url, '_blank');
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to load PDF');
+    } finally {
+      setIsSubmitting({ ...isSubmitting, [bookId]: false });
     }
   };
 
@@ -123,19 +124,6 @@ const Books = () => {
       fetchReadingLists();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to add book to list');
-    } finally {
-      setIsSubmitting({ ...isSubmitting, [bookId]: false });
-    }
-  };
-
-  const handleViewPDF = async (bookId) => {
-    setIsSubmitting({ ...isSubmitting, [bookId]: 'pdf' });
-    try {
-      const response = await bookApi.getBookPDF(bookId);
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-      window.open(url, '_blank');
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load PDF');
     } finally {
       setIsSubmitting({ ...isSubmitting, [bookId]: false });
     }
@@ -274,12 +262,26 @@ const Books = () => {
           </button>
         </form>
       )}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">Book Created</h3>
+            <p className="text-gray-600 mb-4">Your book has been successfully created!</p>
+            <button
+              onClick={() => setShowModal(false)}
+              className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {books.map((book) => (
           <div key={book.id} className="bg-white p-4 rounded-lg shadow-md">
             {book.cover_image && (
               <img
-                src={baseURL+book.cover_image}
+                src={baseURL + book.cover_image}
                 alt={book.title}
                 className="w-full h-48 object-cover rounded-md mb-4"
               />
@@ -334,23 +336,6 @@ const Books = () => {
                     </svg>
                   )}
                 </div>
-                <button
-                  onClick={() => handleDelete(book.id)}
-                  className="text-red-600 hover:text-red-800 text-sm flex items-center"
-                  disabled={isSubmitting[book.id] === 'delete'}
-                >
-                  {isSubmitting[book.id] === 'delete' ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5 mr-2 text-red-600" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                      </svg>
-                      Deleting...
-                    </>
-                  ) : (
-                    'Delete'
-                  )}
-                </button>
               </div>
             )}
           </div>

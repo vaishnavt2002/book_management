@@ -2,23 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import authApi from '../api/authApi';
 
-const Signup = () => {
+const ForgotPassword = () => {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({ username: '', email: '', code: '', password: '' });
+  const [formData, setFormData] = useState({ email: '', code: '', password: '' });
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
-  const validateUsername = (username) => {
-    if (username.length < 6) {
-      return 'Username must be at least 6 characters long.';
-    }
-    if (!/[a-zA-Z]/.test(username)) {
-      return 'Username must contain at least one letter.';
-    }
-    return '';
-  };
 
   const validatePassword = (password) => {
     if (password.length < 8) {
@@ -36,47 +26,38 @@ const Signup = () => {
   const passwordCriteria = {
     length: formData.password.length >= 8,
     uppercase: /[A-Z]/.test(formData.password),
-    number: /[0-9]/.test(formData.password),
+    number:/[0-9]/.test(formData.password),
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     
-    if (name === 'username') {
-      setErrors({ ...errors, username: validateUsername(value) });
-    } else if (name === 'password') {
+    if (name === 'password') {
       setErrors({ ...errors, password: validatePassword(value) });
     }
   };
 
-  const handleRegister = async (e) => {
+  const handleRequestReset = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setSuccessMessage('');
-    const usernameError = validateUsername(formData.username);
-    if (usernameError) {
-      setErrors({ ...errors, username: usernameError });
-      setIsLoading(false);
-      return;
-    }
     try {
-      await authApi.register({ username: formData.username, email: formData.email });
-      setSuccessMessage('Registration successful! Please verify your email with the OTP sent.');
+      await authApi.requestOTP({ email: formData.email, context: 'forgot_password' });
+      setSuccessMessage('OTP sent successfully! Please check your email.');
       setStep(2);
       setErrors({});
     } catch (err) {
-      console.error('Register Error:', err.response?.data);
       setErrors({
         ...errors,
-        general: err.response?.data?.email || err.response?.data?.username || 'Registration failed'
+        general: err.response?.data?.error || 'Failed to send OTP.'
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerify = async (e) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
     const passwordError = validatePassword(formData.password);
     if (passwordError) {
@@ -87,17 +68,17 @@ const Signup = () => {
     setIsLoading(true);
     setSuccessMessage('');
     try {
-      await authApi.verifyOTP({
+      await authApi.resetPassword({
         email: formData.email,
         code: formData.code,
         password: formData.password,
       });
-      setSuccessMessage('Account verified successfully! Redirecting to login...');
+      setSuccessMessage('Password reset successful! Redirecting to login...');
       setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (err) {
-      setErrors({ ...errors, general: err.response?.data?.error || 'Verification failed' });
+      setErrors({ ...errors, general: err.response?.data?.error || 'Password reset failed.' });
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +88,7 @@ const Signup = () => {
     setIsLoading(true);
     setSuccessMessage('');
     try {
-      await authApi.requestOTP({ email: formData.email, context: 'register' });
+      await authApi.requestOTP({ email: formData.email, context: 'forgot_password' });
       setSuccessMessage('OTP resent successfully!');
     } catch (err) {
       setErrors({ ...errors, general: err.response?.data?.error || 'Failed to resend OTP.' });
@@ -129,7 +110,7 @@ const Signup = () => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          {step === 1 ? 'Sign Up' : 'Verify OTP'}
+          {step === 1 ? 'Forgot Password' : 'Reset Password'}
         </h2>
         {successMessage && (
           <p className="text-green-600 bg-green-100 border border-green-400 rounded-md p-3 mb-4 text-sm text-center">
@@ -142,20 +123,7 @@ const Signup = () => {
           </p>
         )}
         {step === 1 ? (
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Username</label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.username ? 'border-red-500' : ''}`}
-                required
-                disabled={isLoading}
-              />
-              {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
-            </div>
+          <form onSubmit={handleRequestReset} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Email</label>
               <input
@@ -171,7 +139,7 @@ const Signup = () => {
             <button
               type="submit"
               className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition flex items-center justify-center"
-              disabled={isLoading || !!errors.username}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <>
@@ -179,15 +147,15 @@ const Signup = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                   </svg>
-                  Registering...
+                  Sending OTP...
                 </>
               ) : (
-                'Register'
+                'Send OTP'
               )}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleVerify} className="space-y-4">
+          <form onSubmit={handleResetPassword} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">OTP Code</label>
               <input
@@ -201,7 +169,7 @@ const Signup = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label className="block text-sm font-medium text-gray-700">New Password</label>
               <input
                 type="password"
                 name="password"
@@ -235,10 +203,10 @@ const Signup = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                   </svg>
-                  Verifying...
+                  Resetting...
                 </>
               ) : (
-                'Verify'
+                'Reset Password'
               )}
             </button>
             <button
@@ -252,22 +220,14 @@ const Signup = () => {
           </form>
         )}
         <p className="mt-4 text-center text-sm text-gray-600">
-          Already have an account?{' '}
+          Remembered your password?{' '}
           <Link to="/login" className="text-blue-600 hover:underline">
             Login
           </Link>
         </p>
-        {step === 1 && (
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Forgot password?{' '}
-            <Link to="/forgot-password" className="text-blue-600 hover:underline">
-              Reset Password
-            </Link>
-          </p>
-        )}
       </div>
     </div>
   );
 };
 
-export default Signup;
+export default ForgotPassword;

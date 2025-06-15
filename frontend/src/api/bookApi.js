@@ -1,17 +1,15 @@
 import axiosInstance from "./axiosInstance";
 
 const bookApi = {
-  // Book endpoints
   getBooks: (searchQuery = '') => {
     const params = searchQuery ? { search: searchQuery } : {};
     return axiosInstance.get('books/', { params });
   },
   getBook: (id) => axiosInstance.get(`books/${id}/`),
   createBook: (data) => axiosInstance.post('books/', data),
+  updateBook: (id, data) => axiosInstance.put(`books/${id}/`, data),
   deleteBook: (id) => axiosInstance.delete(`books/${id}/`),
   getBookPDF: (id) => axiosInstance.get(`books/${id}/pdf/`, { responseType: 'blob' }),
-  
-  // Reading List endpoints
   getReadingLists: () => axiosInstance.get('reading-lists/'),
   createReadingList: (data) => axiosInstance.post('reading-lists/', data),
   updateReadingList: (id, data) => axiosInstance.put(`reading-lists/${id}/`, data),

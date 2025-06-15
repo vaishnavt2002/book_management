@@ -24,6 +24,12 @@ const Navbar = () => {
                   Books
                 </Link>
                 <Link
+                  to="/my-books"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  My Books
+                </Link>
+                <Link
                   to="/reading-lists"
                   className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >

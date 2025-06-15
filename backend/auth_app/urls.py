@@ -1,6 +1,6 @@
 from django.urls import path
-
 from auth_app.views import *
+
 urlpatterns = [
     path('auth/register/', RegisterView.as_view(), name='register'),
     path('auth/otp/request/', OtpRequestView.as_view(), name='otp_request'),
@@ -9,4 +9,6 @@ urlpatterns = [
     path('auth/logout/', LogoutView.as_view(), name='logout'),
     path('auth/profile/', ProfileView.as_view(), name='profile'),
     path('auth/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/forgot-password/', ForgotPasswordView.as_view(), name='forgot_password'),
+    path('auth/forgot-password/reset/', ForgotPasswordResetView.as_view(), name='forgot_password_reset'),
 ]

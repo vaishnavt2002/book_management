@@ -9,6 +9,7 @@ import Loading from './components/Loading';
 import Books from './components/Books';
 import ReadingLists from './components/ReadingLists';
 import Profile from './components/Profile';
+import MyBooks from './components/MyBooks';
 
 function App() {
   const { isLoading } = useAuth()
@@ -26,6 +27,7 @@ function App() {
           <Route path="/books" element={<Books />} />
           <Route path="/reading-lists" element={<ReadingLists />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/my-books" element={<MyBooks />} />
         </Routes>
         </>
   )

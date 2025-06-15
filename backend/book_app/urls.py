@@ -4,7 +4,7 @@ from .views import *
 urlpatterns = [
     path('books/', BookListView.as_view(), name='book_list'),
     path('books/<int:pk>/', BookDetailView.as_view(), name='book_detail'),
-    path('books/<int:pk>/pdf/', BookPDFView.as_view(), name='book_pdf'),  # New endpoint for PDF viewing
+    path('books/<int:pk>/pdf/', BookPDFView.as_view(), name='book_pdf'),
     path('reading-lists/', ReadingListView.as_view(), name='reading_list'),
     path('reading-lists/<int:pk>/', ReadingListDetailView.as_view(), name='reading_list_detail'),
     path('reading-lists/<int:pk>/add-book/', ReadingListAddBookView.as_view(), name='reading_list_add_book'),

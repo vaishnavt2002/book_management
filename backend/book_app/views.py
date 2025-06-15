@@ -1,5 +1,4 @@
 from rest_framework.views import APIView
-from auth_app.serializers import *
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -18,7 +17,6 @@ class BookListView(APIView):
     permission_classes = [AllowAny]
     
     def get(self, request):
-        # Add search functionality
         search_query = request.query_params.get('search', '')
         books = Book.objects.all()
         
@@ -52,6 +50,19 @@ class BookDetailView(APIView):
         except Book.DoesNotExist:
             return Response({'detail': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
     
+    def put(self, request, pk):
+        try:
+            book = Book.objects.get(pk=pk)
+            if book.created_by != request.user:
+                return Response({'detail': 'Not authorized to edit this book'}, status=status.HTTP_403_FORBIDDEN)
+            serializer = BookSerializer(book, data=request.data, context={'request': request}, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Book.DoesNotExist:
+            return Response({'detail': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
+    
     def delete(self, request, pk):
         try:
             book = Book.objects.get(pk=pk)
@@ -71,11 +82,9 @@ class BookPDFView(APIView):
             if not book.pdf_file:
                 return Response({'detail': 'PDF file not available'}, status=status.HTTP_404_NOT_FOUND)
             
-            # Check if file exists
             if not os.path.exists(book.pdf_file.path):
                 return Response({'detail': 'PDF file not found'}, status=status.HTTP_404_NOT_FOUND)
             
-            # Return file response
             with open(book.pdf_file.path, 'rb') as pdf_file:
                 response = HttpResponse(pdf_file.read(), content_type='application/pdf')
                 response['Content-Disposition'] = f'inline; filename="{book.title}.pdf"'
@@ -153,7 +162,6 @@ class ReadingListRemoveBookView(APIView):
             reading_list = ReadingList.objects.get(pk=list_id, user=request.user)
             reading_list_book = reading_list.reading_list_books.get(book=book_id)
             reading_list_book.delete()
-            # Reorder remaining books
             for index, item in enumerate(reading_list.reading_list_books.order_by('order')):
                 item.order = index + 1
                 item.save()
@@ -169,7 +177,7 @@ class ReadingListReorderBooksView(APIView):
     def post(self, request, pk):
         try:
             reading_list = ReadingList.objects.get(pk=pk, user=request.user)
-            book_orders = request.data.get('book_orders', [])  # List of {book_id, order}
+            book_orders = request.data.get('book_orders', [])
             with transaction.atomic():
                 for item in book_orders:
                     reading_list_book = reading_list.reading_list_books.get(book=item['book_id'])
@@ -191,7 +199,6 @@ class ReadingListMarkCompletedView(APIView):
             reading_list_book.is_completed = True
             reading_list_book.completed_at = datetime.now()
             reading_list_book.save()
-            # Reorder remaining books
             for index, item in enumerate(
                 reading_list.reading_list_books.filter(is_completed=False).order_by('order')
             ):
