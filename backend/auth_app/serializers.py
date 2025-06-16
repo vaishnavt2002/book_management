@@ -76,5 +76,5 @@ class LoginSerializer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError('Invalid email or password.')
         if not user.is_verified:
-            raise serializers.ValidationError('Email not verified.')
+            raise serializers.ValidationError('Email not verified. Register again')
         return user

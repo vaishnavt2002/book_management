@@ -8,7 +8,7 @@ class Book(models.Model):
     publication_date = models.DateField()
     description = models.TextField(blank=True, null=True)
     cover_image = models.ImageField(upload_to='book_covers/', blank=True, null=True)
-    pdf_file = models.FileField(upload_to='book_pdfs/', blank=True, null=True)  # New field for PDF
+    pdf_file = models.FileField(upload_to='book_pdfs/', blank=True, null=True)
     created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='books')
     created_at = models.DateTimeField(auto_now_add=True)
 
