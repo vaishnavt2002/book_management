@@ -66,7 +66,6 @@ const Signup = () => {
       setStep(2);
       setErrors({});
     } catch (err) {
-      console.error('Register Error:', err.response?.data);
       setErrors({
         ...errors,
         general: err.response?.data?.email || err.response?.data?.username || 'Registration failed'
@@ -126,145 +125,146 @@ const Signup = () => {
   }, [successMessage]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          {step === 1 ? 'Sign Up' : 'Verify OTP'}
-        </h2>
-        {successMessage && (
-          <p className="text-green-600 bg-green-100 border border-green-400 rounded-md p-3 mb-4 text-sm text-center">
-            {successMessage}
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+      <div className="max-w-md w-full mx-auto">
+        <div className="mb-12 text-center">
+          <h1 className="text-3xl font-light text-slate-800 tracking-tight">
+            {step === 1 ? 'Sign Up' : 'Verify OTP'}
+          </h1>
+          <p className="text-slate-500 mt-2">
+            {step === 1 ? 'Create your account to start managing books' : 'Enter the OTP sent to your email'}
           </p>
+        </div>
+        {successMessage && (
+          <div className="mb-8 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
+            <p className="text-green-700 text-sm">{successMessage}</p>
+          </div>
         )}
         {errors.general && (
-          <p className="text-red-500 bg-red-100 border border-red-400 rounded-md p-3 mb-4 text-sm text-center">
-            {errors.general}
-          </p>
+          <div className="mb-8 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+            <p className="text-red-700 text-sm">{errors.general}</p>
+          </div>
         )}
-        {step === 1 ? (
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Username</label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.username ? 'border-red-500' : ''}`}
-                required
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+          {step === 1 ? (
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-600">Username</label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  className={`mt-1 block w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all ${errors.username ? 'border-red-500' : ''}`}
+                  required
+                  disabled={isLoading}
+                />
+                {errors.username && <p className="text-red-700 text-sm mt-1">{errors.username}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="mt-1 block w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors flex items-center justify-center disabled:bg-slate-400 disabled:cursor-not-allowed"
+                disabled={isLoading || !!errors.username}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                    Registering...
+                  </>
+                ) : (
+                  'Register'
+                )}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerify} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-600">OTP Code</label>
+                <input
+                  type="text"
+                  name="code"
+                  value={formData.code}
+                  onChange={handleChange}
+                  className="mt-1 block w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600">Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`mt-1 block w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all ${errors.password ? 'border-red-500' : ''}`}
+                  required
+                  disabled={isLoading}
+                />
+                {errors.password && <p className="text-red-700 text-sm mt-1">{errors.password}</p>}
+                <ul className="text-sm mt-2 space-y-1 text-slate-600">
+                  <li className={passwordCriteria.length ? 'text-green-600' : ''}>
+                    {passwordCriteria.length ? '✓' : '-'} At least 8 characters
+                  </li>
+                  <li className={passwordCriteria.uppercase ? 'text-green-600' : ''}>
+                    {passwordCriteria.uppercase ? '✓' : '-'} At least one uppercase letter
+                  </li>
+                  <li className={passwordCriteria.number ? 'text-green-600' : ''}>
+                    {passwordCriteria.number ? '✓' : '-'} At least one number
+                  </li>
+                </ul>
+              </div>
+              <button
+                type="submit"
+                className="w-full px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors flex items-center justify-center disabled:bg-slate-400 disabled:cursor-not-allowed"
+                disabled={isLoading || !!errors.password}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                    Verifying...
+                  </>
+                ) : (
+                  'Verify'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleResendOTP}
+                className="w-full mt-2 text-sm text-slate-600 hover:text-slate-800 hover:underline"
                 disabled={isLoading}
-              />
-              {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition flex items-center justify-center"
-              disabled={isLoading || !!errors.username}
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                  </svg>
-                  Registering...
-                </>
-              ) : (
-                'Register'
-              )}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerify} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">OTP Code</label>
-              <input
-                type="text"
-                name="code"
-                value={formData.code}
-                onChange={handleChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.password ? 'border-red-500' : ''}`}
-                required
-                disabled={isLoading}
-              />
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-              <ul className="text-sm mt-2 space-y-1">
-                <li className={`flex items-center ${passwordCriteria.length ? 'text-green-600' : 'text-gray-600'}`}>
-                  {passwordCriteria.length ? '✅' : '⬜'} At least 8 characters
-                </li>
-                <li className={`flex items-center ${passwordCriteria.uppercase ? 'text-green-600' : 'text-gray-600'}`}>
-                  {passwordCriteria.uppercase ? '✅' : '⬜'} At least one uppercase letter
-                </li>
-                <li className={`flex items-center ${passwordCriteria.number ? 'text-green-600' : 'text-gray-600'}`}>
-                  {passwordCriteria.number ? '✅' : '⬜'} At least one number
-                </li>
-              </ul>
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition flex items-center justify-center"
-              disabled={isLoading || !!errors.password}
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                  </svg>
-                  Verifying...
-                </>
-              ) : (
-                'Verify'
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={handleResendOTP}
-              className="w-full mt-2 text-blue-600 hover:underline text-sm"
-              disabled={isLoading}
-            >
-              Resend OTP
-            </button>
-          </form>
-        )}
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 hover:underline">
-            Login
-          </Link>
-        </p>
-        {step === 1 && (
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Forgot password?{' '}
-            <Link to="/forgot-password" className="text-blue-600 hover:underline">
-              Reset Password
+              >
+                Resend OTP
+              </button>
+            </form>
+          )}
+          <p className="mt-4 text-center text-sm text-slate-600">
+            Already have an account?{' '}
+            <Link to="/login" className="text-slate-600 hover:text-slate-800 hover:underline">
+              Login
             </Link>
           </p>
-        )}
+          {step === 1 && (
+            <p className="mt-2 text-center text-sm text-slate-600">
+              Forgot password?{' '}
+              <Link to="/forgot-password" className="text-slate-600 hover:text-slate-800 hover:underline">
+                Reset Password
+              </Link>
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
