@@ -18,7 +18,6 @@ class BookListView(APIView):
     permission_classes = [AllowAny]
     
     def get(self, request):
-        logger.info(f"Fetching book list with search query: {request.query_params.get('search', '')}")
         search_query = request.query_params.get('search', '')
         books = Book.objects.all()
         
@@ -37,11 +36,9 @@ class BookListView(APIView):
         if not request.user.is_authenticated:
             logger.warning("Unauthorized attempt to create book")
             return Response({'detail': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
-        logger.info(f"User {request.user} attempting to create new book")
         serializer = BookSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
-            logger.info(f"Book created successfully: {serializer.data.get('title')}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         logger.error(f"Book creation failed: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -50,28 +47,23 @@ class MyBooksView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        logger.info(f"Fetching books for user {request.user}")
         books = Book.objects.filter(created_by=request.user)
         serializer = BookSerializer(books, many=True)
-        logger.debug(f"Returning {len(serializer.data)} books for user {request.user}")
         return Response(serializer.data)
 
 class BookDetailView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, pk):
-        logger.info(f"Fetching book details for book ID {pk}")
         try:
             book = Book.objects.get(pk=pk)
             serializer = BookSerializer(book)
-            logger.debug(f"Book details retrieved: {book.title}")
             return Response(serializer.data)
         except Book.DoesNotExist:
             logger.error(f"Book not found: ID {pk}")
             return Response({'detail': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
     
     def put(self, request, pk):
-        logger.info(f"User {request.user} attempting to update book ID {pk}")
         try:
             book = Book.objects.get(pk=pk)
             if book.created_by != request.user:
@@ -89,14 +81,12 @@ class BookDetailView(APIView):
             return Response({'detail': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
     
     def delete(self, request, pk):
-        logger.info(f"User {request.user} attempting to delete book ID {pk}")
         try:
             book = Book.objects.get(pk=pk)
             if book.created_by != request.user:
                 logger.warning(f"Unauthorized delete attempt by {request.user} on book ID {pk}")
                 return Response({'detail': 'Not authorized to delete this book'}, status=status.HTTP_403_FORBIDDEN)
             book.delete()
-            logger.info(f"Book deleted successfully: ID {pk}")
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Book.DoesNotExist:
             logger.error(f"Book not found for deletion: ID {pk}")
@@ -127,21 +117,18 @@ class BookPDFView(APIView):
             logger.error(f"Book not found for PDF request: ID {pk}")
             return Response({'detail': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            logger.exception(f"Error serving PDF for book ID {pk}: {str(e)}")
+            logger.error(f"Error serving PDF for book ID {pk}: {str(e)}")
             return Response({'detail': 'Error serving PDF file'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ReadingListView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        logger.info(f"Fetching reading lists for user {request.user}")
         reading_lists = ReadingList.objects.filter(user=request.user)
         serializer = ReadingListSerializer(reading_lists, many=True)
-        logger.debug(f"Returning {len(serializer.data)} reading lists")
         return Response(serializer.data)
 
     def post(self, request):
-        logger.info(f"User {request.user} creating new reading list")
         serializer = ReadingListSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
@@ -154,7 +141,6 @@ class ReadingListDetailView(APIView):
     permission_classes = [IsAuthenticated]
     
     def put(self, request, pk):
-        logger.info(f"User {request.user} updating reading list ID {pk}")
         try:
             reading_list = ReadingList.objects.get(pk=pk, user=request.user)
             serializer = ReadingListSerializer(reading_list, data=request.data, partial=True)
@@ -169,11 +155,9 @@ class ReadingListDetailView(APIView):
             return Response({'detail': 'Reading list not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request, pk):
-        logger.info(f"User {request.user} deleting reading list ID {pk}")
         try:
             reading_list = ReadingList.objects.get(pk=pk, user=request.user)
             reading_list.delete()
-            logger.info(f"Reading list deleted successfully: ID {pk}")
             return Response(status=status.HTTP_204_NO_CONTENT)
         except ReadingList.DoesNotExist:
             logger.error(f"Reading list not found for deletion: ID {pk}")
@@ -183,7 +167,6 @@ class ReadingListAddBookView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, pk):
-        logger.info(f"User {request.user} adding book to reading list ID {pk}")
         try:
             reading_list = ReadingList.objects.get(pk=pk, user=request.user)
             book_id = request.data.get('book_id')
@@ -194,7 +177,6 @@ class ReadingListAddBookView(APIView):
                 book=book,
                 order=max_order + 1
             )
-            logger.info(f"Book ID {book_id} added to reading list ID {pk}")
             return Response(ReadingListSerializer(reading_list).data)
         except ReadingList.DoesNotExist:
             logger.error(f"Reading list not found: ID {pk}")
@@ -210,7 +192,6 @@ class ReadingListRemoveBookView(APIView):
     permission_classes = [IsAuthenticated]
     
     def delete(self, request, list_id, book_id):
-        logger.info(f"User {request.user} removing book ID {book_id} from reading list ID {list_id}")
         try:
             reading_list = ReadingList.objects.get(pk=list_id, user=request.user)
             reading_list_book = reading_list.reading_list_books.get(book=book_id)
@@ -218,7 +199,6 @@ class ReadingListRemoveBookView(APIView):
             for index, item in enumerate(reading_list.reading_list_books.order_by('order')):
                 item.order = index + 1
                 item.save()
-            logger.info(f"Book ID {book_id} removed from reading list ID {list_id}")
             return Response(ReadingListSerializer(reading_list).data)
         except ReadingList.DoesNotExist:
             logger.error(f"Reading list not found: ID {list_id}")
@@ -231,7 +211,6 @@ class ReadingListReorderBooksView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, pk):
-        logger.info(f"User {request.user} reordering books in reading list ID {pk}")
         try:
             reading_list = ReadingList.objects.get(pk=pk, user=request.user)
             book_orders = request.data.get('book_orders', [])
@@ -253,7 +232,6 @@ class ReadingListMarkCompletedView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, list_id, book_id):
-        logger.info(f"User {request.user} marking book ID {book_id} as completed in reading list ID {list_id}")
         try:
             reading_list = ReadingList.objects.get(pk=list_id, user=request.user)
             reading_list_book = reading_list.reading_list_books.get(book=book_id)
