@@ -9,7 +9,7 @@ const LandingPage = () => {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center text-center">
       <div className="max-w-4xl mx-auto px-6 py-12">
         <h1 className="text-3xl font-light text-slate-800 tracking-tight mb-6">
-          Welcome to Book Management
+          Welcome to Book Hub
         </h1>
         <p className="text-slate-500 mb-8 max-w-2xl">
           Organize your reading journey with ease. Create reading lists, manage books, and explore a world of
