@@ -10,6 +10,7 @@ import Books from './components/Books';
 import ReadingLists from './components/ReadingLists';
 import Profile from './components/Profile';
 import MyBooks from './components/MyBooks';
+import ForgotPassword from './components/ForgotPassword';
 
 function App() {
   const { isLoading } = useAuth()
@@ -28,6 +29,7 @@ function App() {
           <Route path="/reading-lists" element={<ReadingLists />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/my-books" element={<MyBooks />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
         </Routes>
         </>
   )

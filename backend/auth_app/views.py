@@ -81,7 +81,6 @@ class OtpRequestView(APIView):
             try:
                 user = CustomUser.objects.get(email=email)
                 otp = str(random.randint(100000, 999999))
-                # Store OTP with context (register or forgot_password)
                 context = request.data.get('context', 'register')
                 cache_key = f'otp_{email}_{context}'
                 cache.set(cache_key, otp, timeout=600)
