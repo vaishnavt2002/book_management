@@ -23,7 +23,7 @@ const MyBooks = () => {
   const [showForm, setShowForm] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(null);
   const navigate = useNavigate();
-  const baseURL = import.meta.env.VITE_BASE_URL;
+  const baseURL = import.meta.env.VITE_MEDIA_URL;
 
   useEffect(() => {
     if (!user && !isLoading) {
