@@ -5,6 +5,7 @@ const bookApi = {
     const params = searchQuery ? { search: searchQuery } : {};
     return axiosInstance.get('books/', { params });
   },
+  getBooksByUser: () => axiosInstance.get('books/my-books/'),
   getBook: (id) => axiosInstance.get(`books/${id}/`),
   createBook: (data) => axiosInstance.post('books/', data),
   updateBook: (id, data) => axiosInstance.put(`books/${id}/`, data),

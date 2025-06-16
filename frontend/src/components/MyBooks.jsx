@@ -5,7 +5,7 @@ import bookApi from '../api/bookApi';
 
 const MyBooks = () => {
   const { user, isLoading } = useAuth();
-  const [books, setBooks] = useState([]); // Initialize with empty array
+  const [books, setBooks] = useState([]);
   const [formData, setFormData] = useState({
     id: null,
     title: '',
@@ -20,6 +20,8 @@ const MyBooks = () => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState({});
   const [showModal, setShowModal] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(null);
   const navigate = useNavigate();
   const baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -31,13 +33,20 @@ const MyBooks = () => {
     }
   }, [user, isLoading, navigate]);
 
+  useEffect(() => {
+    if (showModal) {
+      const timer = setTimeout(() => setShowModal(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showModal]);
+
   const fetchBooks = async () => {
     try {
-      const res = await bookApi.getBooks();
-      setBooks(res.data.filter(book => book.created_by === user.id) || []);
+      const res = await bookApi.getBooksByUser();
+      setBooks(res.data || []);
     } catch (err) {
-      setError('Failed to fetch books');
-      setBooks([]); // Ensure books is an array even on error
+      setError('Failed to fetch your books');
+      setBooks([]);
     }
   };
 
@@ -58,6 +67,7 @@ const MyBooks = () => {
       cover_image: null,
       pdf_file: null,
     });
+    setShowForm(true);
   };
 
   const handleSubmit = async (e) => {
@@ -70,17 +80,15 @@ const MyBooks = () => {
       data.append('genre', formData.genre);
       data.append('publication_date', formData.publication_date);
       data.append('description', formData.description);
-      if (formData.cover_image) {
-        data.append('cover_image', formData.cover_image);
-      }
-      if (formData.pdf_file) {
-        data.append('pdf_file', formData.pdf_file);
-      }
+      if (formData.cover_image) data.append('cover_image', formData.cover_image);
+      if (formData.pdf_file) data.append('pdf_file', formData.pdf_file);
+      
       if (editBookId) {
         await bookApi.updateBook(formData.id, data);
       } else {
         await bookApi.createBook(data);
       }
+      
       setFormData({
         id: null,
         title: '',
@@ -92,6 +100,7 @@ const MyBooks = () => {
         pdf_file: null,
       });
       setEditBookId(null);
+      setShowForm(false);
       setShowModal(true);
       fetchBooks();
     } catch (err) {
@@ -102,16 +111,15 @@ const MyBooks = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this book?')) {
-      setIsSubmitting({ ...isSubmitting, [id]: 'delete' });
-      try {
-        await bookApi.deleteBook(id);
-        fetchBooks();
-      } catch (err) {
-        setError('Failed to delete book');
-      } finally {
-        setIsSubmitting({ ...isSubmitting, [id]: false });
-      }
+    setIsSubmitting({ ...isSubmitting, [id]: 'delete' });
+    try {
+      await bookApi.deleteBook(id);
+      fetchBooks();
+      setShowDeleteModal(null);
+    } catch (err) {
+      setError('Failed to delete book');
+    } finally {
+      setIsSubmitting({ ...isSubmitting, [id]: false });
     }
   };
 
@@ -130,227 +138,290 @@ const MyBooks = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 text-blue-600">
-          <svg viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex items-center space-x-3">
+          <div className="animate-spin h-6 w-6 border-2 border-slate-300 border-t-slate-600 rounded-full"></div>
+          <span className="text-slate-600 font-medium">Loading...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">My Books</h2>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      <form onSubmit={handleSubmit} className="mb-8 bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-medium text-gray-700 mb-4">{editBookId ? 'Edit Book' : 'Add New Book'}</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Title</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Author(s)</label>
-            <input
-              type="text"
-              name="authors"
-              value={formData.authors}
-              onChange={handleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Genre</label>
-            <input
-              type="text"
-              name="genre"
-              value={formData.genre}
-              onChange={handleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Publication Date</label>
-            <input
-              type="date"
-              name="publication_date"
-              value={formData.publication_date}
-              onChange={handleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              rows="4"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Cover Image</label>
-            <input
-              type="file"
-              name="cover_image"
-              onChange={handleChange}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              accept="image/*"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">PDF File</label>
-            <input
-              type="file"
-              name="pdf_file"
-              onChange={handleChange}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              accept="application/pdf"
-              required={!editBookId}
-            />
-          </div>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="mb-12">
+          <h1 className="text-3xl font-light text-slate-800 tracking-tight">My Books</h1>
+          <p className="text-slate-500 mt-2">Manage your personal book collection</p>
         </div>
-        <div className="mt-4 flex gap-2">
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-8 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Create/Edit Book Form */}
+        <div className="mb-12">
           <button
-            type="submit"
-            disabled={isSubmitting.create || isSubmitting.edit}
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition flex items-center justify-center disabled:bg-blue-400"
+            onClick={() => setShowForm(true)}
+            className="px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors mb-6"
           >
-            {isSubmitting.create || isSubmitting.edit ? (
-              <>
-                <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-                {editBookId ? 'Updating Book...' : 'Adding Book...'}
-              </>
-            ) : (
-              editBookId ? 'Update Book' : 'Add Book'
-            )}
+            Create New Book
           </button>
-          {editBookId && (
-            <button
-              type="button"
-              onClick={() => {
-                setEditBookId(null);
-                setFormData({
-                  id: null,
-                  title: '',
-                  authors: '',
-                  genre: '',
-                  publication_date: '',
-                  description: '',
-                  cover_image: null,
-                  pdf_file: null,
-                });
-              }}
-              className="w-full bg-gray-600 text-white py-2 rounded-md hover:bg-gray-700 transition"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      </form>
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">Book {editBookId ? 'Updated' : 'Created'}</h3>
-            <p className="text-gray-600 mb-4">Your book has been successfully {editBookId ? 'updated' : 'created'}!</p>
-            <button
-              onClick={() => setShowModal(false)}
-              className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {books.length > 0 ? (
-          books.map((book) => (
-            <div key={book.id} className="bg-white p-4 rounded-lg shadow-md">
-              {book.cover_image && (
-                <img
-                  src={baseURL + book.cover_image}
-                  alt={book.title}
-                  className="w-full h-48 object-cover rounded-md mb-4"
-                />
-              )}
-              <h3 className="text-lg font-medium text-gray-800">{book.title}</h3>
-              <p className="text-sm text-gray-600">Author(s): {book.authors}</p>
-              <p className="text-sm text-gray-600">Genre: {book.genre}</p>
-              <p className="text-sm text-gray-600">
-                Published: {new Date(book.publication_date).toLocaleDateString()}
-              </p>
-              {book.description && (
-                <p className="text-sm text-gray-600 mt-2">{book.description}</p>
-              )}
-              <div className="mt-4 flex flex-col gap-2">
-                {book.pdf_file && (
+          {showForm && (
+            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+              <h2 className="text-lg font-medium text-slate-800 mb-6">{editBookId ? 'Edit Book' : 'Add New Book'}</h2>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-slate-600">Title</label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleChange}
+                      className="mt-1 w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all"
+                      placeholder="Enter book title"
+                      required
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-slate-600">Author(s)</label>
+                    <input
+                      type="text"
+                      name="authors"
+                      value={formData.authors}
+                      onChange={handleChange}
+                      className="mt-1 w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all"
+                      placeholder="Enter author(s)"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-slate-600">Genre</label>
+                    <input
+                      type="text"
+                      name="genre"
+                      value={formData.genre}
+                      onChange={handleChange}
+                      className="mt-1 w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all"
+                      placeholder="Enter genre"
+                      required
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-slate-600">Publication Date</label>
+                    <input
+                      type="date"
+                      name="publication_date"
+                      value={formData.publication_date}
+                      onChange={handleChange}
+                      className="mt-1 w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-600">Description</label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all"
+                    rows="4"
+                    placeholder="Enter book description"
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-slate-600">Cover Image</label>
+                    <input
+                      type="file"
+                      name="cover_image"
+                      onChange={handleChange}
+                      className="mt-1 w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                      accept="image/*"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-slate-600">PDF File</label>
+                    <input
+                      type="file"
+                      name="pdf_file"
+                      onChange={handleChange}
+                      className="mt-1 w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                      accept="application/pdf"
+                      required={!editBookId}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4">
                   <button
-                    onClick={() => handleViewPDF(book.id)}
-                    className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
-                    disabled={isSubmitting[book.id] === 'pdf'}
+                    type="submit"
+                    disabled={isSubmitting.create || isSubmitting.edit}
+                    className="flex-1 px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center"
                   >
-                    {isSubmitting[book.id] === 'pdf' ? (
+                    {isSubmitting.create || isSubmitting.edit ? (
                       <>
-                        <svg className="animate-spin h-5 w-5 mr-2 text-blue-600" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                        </svg>
-                        Loading PDF...
+                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                        {editBookId ? 'Updating Book...' : 'Adding Book...'}
                       </>
                     ) : (
-                      'View PDF'
+                      editBookId ? 'Update Book' : 'Add Book'
                     )}
                   </button>
-                )}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleEdit(book)}
-                    className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
-                    disabled={isSubmitting[book.id]}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(book.id)}
-                    className="text-red-600 hover:text-red-800 text-sm flex items-center"
-                    disabled={isSubmitting[book.id] === 'delete'}
-                  >
-                    {isSubmitting[book.id] === 'delete' ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5 mr-2 text-red-600" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                        </svg>
-                        Deleting...
-                      </>
-                    ) : (
-                      'Delete'
-                    )}
-                  </button>
+                  {(editBookId || showForm) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditBookId(null);
+                        setFormData({
+                          id: null,
+                          title: '',
+                          authors: '',
+                          genre: '',
+                          publication_date: '',
+                          description: '',
+                          cover_image: null,
+                          pdf_file: null,
+                        });
+                        setShowForm(false);
+                      }}
+                      className="flex-1 px-6 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  )}
                 </div>
               </div>
+            </form>
+          )}
+        </div>
+
+        {/* Success Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-slate-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 max-w-md w-full">
+              <h3 className="text-lg font-medium text-slate-800 mb-4">Book {editBookId ? 'Updated' : 'Created'}</h3>
+              <p className="text-slate-600 mb-6">Your book has been successfully {editBookId ? 'updated' : 'created'}!</p>
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
+              >
+                Close
+              </button>
             </div>
-          ))
-        ) : (
-          <p className="text-gray-600">No books created yet.</p>
+          </div>
         )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-slate-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 max-w-md w-full">
+              <h3 className="text-lg font-medium text-slate-800 mb-4">Confirm Delete</h3>
+              <p className="text-slate-600 mb-6">
+                Are you sure you want to delete "{books.find(b => b.id === showDeleteModal)?.title}"? This action cannot be undone.
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => handleDelete(showDeleteModal)}
+                  className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center disabled:bg-red-400 disabled:cursor-not-allowed"
+                  disabled={isSubmitting[showDeleteModal] === 'delete'}
+                >
+                  {isSubmitting[showDeleteModal] === 'delete' ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete'
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowDeleteModal(null)}
+                  className="flex-1 px-6 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Books List */}
+        <div className="space-y-8">
+          {books.length > 0 ? (
+            books.map((book) => (
+              <div key={book.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-8">
+                  <div className="flex flex-col sm:flex-row gap-6">
+                    {book.cover_image && (
+                      <div className="flex-shrink-0">
+                        <img
+                          src={baseURL + book.cover_image}
+                          alt={book.title}
+                          className="w-full sm:w-48 rounded-lg object-contain"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <h3 className="text-xl font-medium text-slate-800 mb-2">{book.title}</h3>
+                      <p className="text-sm text-slate-500 mb-1">Author(s): {book.authors}</p>
+                      <p className="text-sm text-slate-500 mb-1">Genre: {book.genre}</p>
+                      <p className="text-sm text-slate-500 mb-2">
+                        Published: {new Date(book.publication_date).toLocaleDateString()}
+                      </p>
+                      {book.description && (
+                        <p className="text-sm text-slate-600 mb-4">{book.description}</p>
+                      )}
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        {book.pdf_file && (
+                          <button
+                            onClick={() => handleViewPDF(book.id)}
+                            className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-md transition-colors disabled:opacity-50"
+                            disabled={isSubmitting[book.id] === 'pdf'}
+                          >
+                            {isSubmitting[book.id] === 'pdf' ? (
+                              <>
+                                <div className="animate-spin h-4 w-4 border-2 border-slate-600 border-t-transparent rounded-full mr-2 inline-block"></div>
+                                Loading PDF...
+                              </>
+                            ) : (
+                              'View PDF'
+                            )}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleEdit(book)}
+                          className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-md transition-colors disabled:opacity-50"
+                          disabled={isSubmitting[book.id]}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setShowDeleteModal(book.id)}
+                          className="px-3 py-1.5 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                          disabled={isSubmitting[book.id] === 'delete'}
+                        >
+                          {isSubmitting[book.id] === 'delete' ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-slate-400 text-lg">No books created yet. Create your first one above!</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

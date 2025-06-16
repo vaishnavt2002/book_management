@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import authApi from '../api/authApi';
 
 const Profile = () => {
-  const { user, isLoading, logout } = useAuth();
-  const [formData, setFormData] = useState({ username: '', email: '' });
+  const { user, isLoading, logout, updateUser } = useAuth();
+  const [formData, setFormData] = useState({ username: '' });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ const Profile = () => {
     if (!user && !isLoading) {
       navigate('/login');
     } else if (user) {
-      setFormData({ username: user.username, email: user.email });
+      setFormData({ username: user.username });
     }
   }, [user, isLoading, navigate]);
 
@@ -25,11 +25,16 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError('');
     try {
-      await authApi.updateProfile(formData);
-      navigate('/'); // Redirect to home or refresh profile
+      const response = await authApi.updateProfile(formData);
+      
+      updateUser({ ...user, username: response.data.username });
+      
+      navigate('/');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update profile');
+
+      setError(err.response?.data?.detail || err.response?.data?.error || 'Failed to update profile');
     } finally {
       setIsSubmitting(false);
     }
@@ -37,69 +42,62 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 text-blue-600">
-          <svg viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex items-center space-x-3">
+          <div className="animate-spin h-6 w-6 border-2 border-slate-300 border-t-slate-600 rounded-full"></div>
+          <span className="text-slate-600 font-medium">Loading...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Profile</h2>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Username</label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+      <div className="max-w-md w-full mx-auto">
+        <div className="mb-12 text-center">
+          <h1 className="text-3xl font-light text-slate-800 tracking-tight">Profile</h1>
+          <p className="text-slate-500 mt-2">Update your username or log out</p>
+        </div>
+        {error && (
+          <div className="mb-8 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+            <p className="text-red-700 text-sm">{error}</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
+        )}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-600">Username</label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className="mt-1 block w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                  Updating...
+                </>
+              ) : (
+                'Update Profile'
+              )}
+            </button>
+          </form>
           <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition flex items-center justify-center disabled:bg-blue-400"
+            onClick={logout}
+            className="mt-4 w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            {isSubmitting ? (
-              <>
-                <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-                Updating...
-              </>
-            ) : (
-              'Update Profile'
-            )}
+            Logout
           </button>
-        </form>
-        <button
-          onClick={logout}
-          className="mt-4 w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700 transition"
-        >
-          Logout
-        </button>
+        </div>
       </div>
     </div>
   );

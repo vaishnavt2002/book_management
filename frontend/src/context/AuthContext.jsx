@@ -32,33 +32,42 @@ export const AuthProvider = ({ children }) => {
     checkProfile();
 
     return () => {
-      isMounted = false; // Cleanup to prevent memory leaks
+      isMounted = false;
     };
-  }, []); // Empty dependency array ensures this runs only once
+  }, []);
 
   const login = async (data) => {
     try {
-      const res = await authApi.login(data); // Fix: Use authApi instead of api
+      const res = await authApi.login(data);
       setUser(res.data.user);
       navigate('/');
     } catch (error) {
-      throw error; // Let the caller handle errors
+      throw error; 
     }
   };
 
   const logout = async () => {
-    
     try {
-      const res = await authApi.logOut(); // Fix: Use authApi instead of api
+      const res = await authApi.logOut();
       setUser(null);
       navigate('/');
     } catch (error) {
-      throw error; // Let the caller handle errors
+      throw error; 
     }
   };
 
+  const updateUser = (updatedUserData) => {
+    setUser(updatedUserData);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      updateUser, 
+      isLoading 
+    }}>
       {children}
     </AuthContext.Provider>
   );

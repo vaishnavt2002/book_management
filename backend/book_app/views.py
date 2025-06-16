@@ -11,6 +11,7 @@ from django.db.models import Q
 from django.http import HttpResponse, Http404
 import os
 
+
 logger = logging.getLogger(__name__)
 
 class BookListView(APIView):
@@ -38,6 +39,14 @@ class BookListView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class MyBooksView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        books = Book.objects.filter(created_by=request.user)
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data)
 
 class BookDetailView(APIView):
     permission_classes = [IsAuthenticated]

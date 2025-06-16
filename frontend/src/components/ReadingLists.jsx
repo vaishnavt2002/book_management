@@ -136,163 +136,207 @@ const ReadingLists = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 text-blue-600">
-          <svg viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex items-center space-x-3">
+          <div className="animate-spin h-6 w-6 border-2 border-slate-300 border-t-slate-600 rounded-full"></div>
+          <span className="text-slate-600 font-medium">Loading...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Reading Lists</h2>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      <form onSubmit={handleCreateList} className="mb-8 bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-medium text-gray-700 mb-4">Create New Reading List</h3>
-        <div className="flex space-x-4">
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Reading List Name"
-            required
-          />
-          <button
-            type="submit"
-            disabled={isSubmitting.create}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition flex items-center disabled:bg-blue-400"
-          >
-            {isSubmitting.create ? (
-              <>
-                <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-                Creating...
-              </>
-            ) : (
-              'Create'
-            )}
-          </button>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="mb-12">
+          <h1 className="text-3xl font-light text-slate-800 tracking-tight">Reading Lists</h1>
+          <p className="text-slate-500 mt-2">Organize your reading journey</p>
         </div>
-      </form>
-      <div className="space-y-6">
-        {readingLists.map((list) => (
-          <div key={list.id} className="bg-white p-6 rounded-lg shadow-md">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-800">{list.name}</h3>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-8 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Create New List Form */}
+        <div className="mb-12">
+          <form onSubmit={handleCreateList} className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+            <h2 className="text-lg font-medium text-slate-800 mb-6">Create New Reading List</h2>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="flex-1 px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all"
+                placeholder="Enter list name"
+                required
+              />
               <button
-                onClick={() => handleDeleteList(list.id)}
-                className="text-red-600 hover:text-red-800 text-sm"
-                disabled={isSubmitting[list.id] === 'delete'}
+                type="submit"
+                disabled={isSubmitting.create}
+                className="px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
               >
-                {isSubmitting[list.id] === 'delete' ? 'Deleting...' : 'Delete List'}
+                {isSubmitting.create ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                    Creating...
+                  </>
+                ) : (
+                  'Create List'
+                )}
               </button>
             </div>
-            <h4 className="text-md font-medium text-gray-700 mb-2">Reading List</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              {list.reading_list_books
-                .filter((item) => !item.is_completed)
-                .sort((a, b) => a.order - b.order)
-                .map((item, index, array) => (
-                  <div
-                    key={item.book.id}
-                    className="flex justify-between items-center p-2 bg-gray-50 rounded-md"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{item.book.title}</p>
-                      <p className="text-sm text-gray-600">Author(s): {item.book.authors}</p>
+          </form>
+        </div>
+
+        {/* Reading Lists */}
+        <div className="space-y-8">
+          {readingLists.map((list) => (
+            <div key={list.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              {/* List Header */}
+              <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 className="text-xl font-medium text-slate-800">{list.name}</h3>
+                <button
+                  onClick={() => handleDeleteList(list.id)}
+                  className="px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                  disabled={isSubmitting[list.id] === 'delete'}
+                >
+                  {isSubmitting[list.id] === 'delete' ? 'Deleting...' : 'Delete List'}
+                </button>
+              </div>
+
+              <div className="p-8">
+                {/* Active Books Section */}
+                <div className="mb-8">
+                  <h4 className="text-sm font-medium text-slate-600 uppercase tracking-wide mb-4">Current Reading</h4>
+                  {list.reading_list_books.filter((item) => !item.is_completed).length === 0 ? (
+                    <p className="text-slate-400 italic">No books in this list yet</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {list.reading_list_books
+                        .filter((item) => !item.is_completed)
+                        .sort((a, b) => a.order - b.order)
+                        .map((item, index, array) => (
+                          <div
+                            key={item.book.id}
+                            className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100"
+                          >
+                            <div className="flex-1">
+                              <h5 className="font-medium text-slate-800">{item.book.title}</h5>
+                              <p className="text-sm text-slate-500 mt-1">{item.book.authors}</p>
+                            </div>
+                            <div className="flex items-center space-x-2 ml-4">
+                              {item.book.pdf_file && (
+                                <button
+                                  onClick={() => handleViewPDF(item.book.id)}
+                                  className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-md transition-colors disabled:opacity-50"
+                                  disabled={isSubmitting[item.book.id] === 'pdf'}
+                                >
+                                  {isSubmitting[item.book.id] === 'pdf' ? 'Loading...' : 'View PDF'}
+                                </button>
+                              )}
+                              <div className="flex">
+                                <button
+                                  onClick={() => handleMoveBook(list.id, item.book.id, 'up')}
+                                  disabled={isSubmitting[`${list.id}-${item.book.id}`] || index === 0}
+                                  className="p-1.5 text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-colors"
+                                  title="Move Up"
+                                >
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() => handleMoveBook(list.id, item.book.id, 'down')}
+                                  disabled={isSubmitting[`${list.id}-${item.book.id}`] || index === array.length - 1}
+                                  className="p-1.5 text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-colors"
+                                  title="Move Down"
+                                >
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </button>
+                              </div>
+                              <button
+                                onClick={() => handleMarkCompleted(list.id, item.book.id)}
+                                className="px-3 py-1.5 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors disabled:opacity-50"
+                                disabled={isSubmitting[`${list.id}-${item.book.id}`] === 'complete'}
+                              >
+                                {isSubmitting[`${list.id}-${item.book.id}`] === 'complete' ? 'Marking...' : 'Complete'}
+                              </button>
+                              <button
+                                onClick={() => handleRemoveBook(list.id, item.book.id)}
+                                className="px-3 py-1.5 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                                disabled={isSubmitting[`${list.id}-${item.book.id}`] === 'remove'}
+                              >
+                                {isSubmitting[`${list.id}-${item.book.id}`] === 'remove' ? 'Removing...' : 'Remove'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                     </div>
-                    <div className="flex space-x-2">
-                      {item.book.pdf_file && (
-                        <button
-                          onClick={() => handleViewPDF(item.book.id)}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
-                          disabled={isSubmitting[item.book.id] === 'pdf'}
-                        >
-                          {isSubmitting[item.book.id] === 'pdf' ? 'Loading PDF...' : 'View PDF'}
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleMoveBook(list.id, item.book.id, 'up')}
-                        disabled={isSubmitting[`${list.id}-${item.book.id}`] || index === 0}
-                        className="text-blue-600 hover:text-blue-800 text-sm disabled:text-gray-400"
-                        title="Move Up"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        onClick={() => handleMoveBook(list.id, item.book.id, 'down')}
-                        disabled={isSubmitting[`${list.id}-${item.book.id}`] || index === array.length - 1}
-                        className="text-blue-600 hover:text-blue-800 text-sm disabled:text-gray-400"
-                        title="Move Down"
-                      >
-                        ↓
-                      </button>
-                      <button
-                        onClick={() => handleMarkCompleted(list.id, item.book.id)}
-                        className="text-green-600 hover:text-green-800 text-sm"
-                        disabled={isSubmitting[`${list.id}-${item.book.id}`] === 'complete'}
-                      >
-                        {isSubmitting[`${list.id}-${item.book.id}`] === 'complete' ? 'Marking...' : 'Mark Completed'}
-                      </button>
-                      <button
-                        onClick={() => handleRemoveBook(list.id, item.book.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                        disabled={isSubmitting[`${list.id}-${item.book.id}`] === 'remove'}
-                      >
-                        {isSubmitting[`${list.id}-${item.book.id}`] === 'remove' ? 'Removing...' : 'Remove'}
-                      </button>
+                  )}
+                </div>
+
+                {/* Completed Books Section */}
+                <div>
+                  <h4 className="text-sm font-medium text-slate-600 uppercase tracking-wide mb-4">Completed</h4>
+                  {list.reading_list_books.filter((item) => item.is_completed).length === 0 ? (
+                    <p className="text-slate-400 italic">No completed books yet</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {list.reading_list_books
+                        .filter((item) => item.is_completed)
+                        .sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))
+                        .map((item) => (
+                          <div
+                            key={item.book.id}
+                            className="flex items-center justify-between p-4 bg-emerald-50 rounded-lg border border-emerald-100"
+                          >
+                            <div className="flex-1">
+                              <h5 className="font-medium text-slate-800">{item.book.title}</h5>
+                              <p className="text-sm text-slate-500 mt-1">{item.book.authors}</p>
+                              <p className="text-xs text-emerald-600 mt-1">
+                                Completed: {new Date(item.completed_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="flex items-center space-x-2 ml-4">
+                              {item.book.pdf_file && (
+                                <button
+                                  onClick={() => handleViewPDF(item.book.id)}
+                                  className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-md transition-colors disabled:opacity-50"
+                                  disabled={isSubmitting[item.book.id] === 'pdf'}
+                                >
+                                  {isSubmitting[item.book.id] === 'pdf' ? 'Loading...' : 'View PDF'}
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleRemoveBook(list.id, item.book.id)}
+                                className="px-3 py-1.5 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                                disabled={isSubmitting[`${list.id}-${item.book.id}`] === 'remove'}
+                              >
+                                {isSubmitting[`${list.id}-${item.book.id}`] === 'remove' ? 'Removing...' : 'Remove'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                     </div>
-                  </div>
-                ))}
+                  )}
+                </div>
+              </div>
             </div>
-            <h4 className="text-md font-medium text-gray-700 mb-2">Completed Books</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {list.reading_list_books
-                .filter((item) => item.is_completed) // Fixed filter to show completed books
-                .sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))
-                .map((item) => (
-                  <div
-                    key={item.book.id}
-                    className="flex justify-between items-center p-2 bg-gray-50 rounded-md"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{item.book.title}</p>
-                      <p className="text-sm text-gray-600">Author(s): {item.book.authors}</p>
-                      <p className="text-sm text-gray-600">
-                        Completed: {new Date(item.completed_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex space-x-2">
-                      {item.book.pdf_file && (
-                        <button
-                          onClick={() => handleViewPDF(item.book.id)}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
-                          disabled={isSubmitting[item.book.id] === 'pdf'}
-                        >
-                          {isSubmitting[item.book.id] === 'pdf' ? 'Loading PDF...' : 'View PDF'}
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleRemoveBook(list.id, item.book.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                        disabled={isSubmitting[`${list.id}-${item.book.id}`] === 'remove'}
-                      >
-                        {isSubmitting[`${list.id}-${item.book.id}`] === 'remove' ? 'Removing...' : 'Remove'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-            </div>
+          ))}
+        </div>
+
+        {readingLists.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-slate-400 text-lg">No reading lists yet. Create your first one above!</p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
