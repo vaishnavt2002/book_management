@@ -29,7 +29,6 @@ class BookListView(APIView):
             )
         
         serializer = BookSerializer(books, many=True)
-        logger.debug(f"Returning {len(serializer.data)} books")
         return Response(serializer.data)
 
     def post(self, request):

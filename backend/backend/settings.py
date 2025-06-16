@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from decouple import config
+import logging
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -133,17 +134,16 @@ from datetime import timedelta
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Increased from 5 minutes
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Increased from 1 day
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
     
-    # Cookie settings (these are mostly for reference, actual cookie handling is in views)
     'AUTH_COOKIE': 'access_token',
     'AUTH_COOKIE_REFRESH': 'refresh_token',
     'AUTH_COOKIE_HTTP_ONLY': True,
-    'AUTH_COOKIE_SECURE': False,  # Set to True in production
+    'AUTH_COOKIE_SECURE': False,  
     'AUTH_COOKIE_SAMESITE': 'Lax',
     
     # Algorithm settings
@@ -190,3 +190,32 @@ CACHES = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+import os
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'simple': {
+            'format': '{levelname} {asctime} {name} {message}',
+            'style': '{',
+        },
+    },
+
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'debug.log'),
+            'formatter': 'simple',
+        },
+    },
+
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'DEBUG',
+    },
+}
