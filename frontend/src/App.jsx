@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/NavBar';
 import LandingPage from './components/LandingPage';
@@ -12,27 +12,107 @@ import Profile from './components/Profile';
 import MyBooks from './components/MyBooks';
 import ForgotPassword from './components/ForgotPassword';
 
+const ProtectedRoute = ({ children }) => {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <Loading />;
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
+};
+
+const PublicRoute = ({ children }) => {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <Loading />;
+  }
+  
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+};
+
 function App() {
-  const { isLoading } = useAuth()
+  const { isLoading } = useAuth();
+  
   if (isLoading) {
     return <Loading />;
   }
 
   return (
-        <>
+      <AuthProvider>
         <Navbar />
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/books" element={<Books />} />
-          <Route path="/reading-lists" element={<ReadingLists />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/my-books" element={<MyBooks />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+          
+          <Route 
+            path="/login" 
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            } 
+          />
+          <Route 
+            path="/signup" 
+            element={
+              <PublicRoute>
+                <Signup />
+              </PublicRoute>
+            } 
+          />
+          <Route 
+            path="/forgot-password" 
+            element={
+              <PublicRoute>
+                <ForgotPassword />
+              </PublicRoute>
+            } 
+          />
+          
+          <Route 
+            path="/books" 
+            element={
+              <ProtectedRoute>
+                <Books />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/reading-lists" 
+            element={
+              <ProtectedRoute>
+                <ReadingLists />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/my-books" 
+            element={
+              <ProtectedRoute>
+                <MyBooks />
+              </ProtectedRoute>
+            } 
+          />
         </Routes>
-        </>
-  )
+      </AuthProvider>
+  );
 }
 
-export default App
+export default App;
