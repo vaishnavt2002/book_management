@@ -66,11 +66,14 @@ const Signup = () => {
       setStep(2);
       setErrors({});
     } catch (err) {
-      setErrors({
-        ...errors,
-        general: err.response?.data?.email || err.response?.data?.username || 'Registration failed'
-      });
-    } finally {
+  const errorData = err.response?.data || {};
+  setErrors({
+    ...errors,
+    username: errorData.username?.[0],
+    email: errorData.email?.[0],
+    general: errorData.detail || errorData.error || 'Registration failed'
+  });
+} finally {
       setIsLoading(false);
     }
   };

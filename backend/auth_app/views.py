@@ -27,6 +27,7 @@ class RegisterView(APIView):
                 return Response({
                     'error': 'User with this email is already registered and verified'
                 }, status=status.HTTP_400_BAD_REQUEST)
+            
             else:
                 logger.info(f"Updating existing unverified user: {email}")
                 serializer = UserRegisterSerializer(existing_user, data=request.data, partial=True)
